@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Checklist — Single Page App v2</title>
+  <style>
+    :root{
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --muted: #6b7280;
+      --accent: #6366f1; /* indigo */
+      --success: #10b981;
+      --danger: #ef4444;
+      --glass: rgba(255,255,255,0.6);
+      --shadow: 0 6px 20px rgba(16,24,40,0.06);
+      --radius: 14px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background: linear-gradient(180deg, #eef2ff 0%, var(--bg) 100%);
+      display:flex;align-items:center;justify-content:center;
+      padding:32px;font-size:16px;color:#0f172a;
+    }
+
+    .app{
+      width:100%;
+      max-width:480px;
+      background:var(--card);
+      border-radius:18px;
+      padding:22px;
+      box-shadow:var(--shadow);
+      display:block;
+    }
+
+    header{grid-column:1/3;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+    .title{display:flex;gap:12px;align-items:center}
+    .logo{
+      width:48px;height:48px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),#8b5cf6);color:white;font-weight:700;font-size:18px;box-shadow:0 6px 18px rgba(99,102,241,0.18)
+    }
+    h1{margin:0;font-size:20px}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
+
+    /* Left column - main checklist area */
+    .main{
+      padding:18px;background:linear-gradient(180deg, rgba(99,102,241,0.03), transparent);border-radius:12px;min-height:320px;
+    }
+
+    .controls{display:flex;gap:8px;margin-bottom:14px}
+    .input-wrap{flex:1;display:flex;gap:8px}
+    input[type="text"], .edit-input{
+      width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(15,23,42,0.06);background:transparent;font-size:15px;outline:none
+    }
+    .btn{
+      padding:10px 12px;border-radius:10px;border:0;background:var(--accent);color:white;font-weight:600;cursor:pointer;min-width:44px;display:inline-flex;align-items:center;justify-content:center
+    }
+    .btn.ghost{background:transparent;border:1px solid rgba(15,23,42,0.06);color:var(--muted);font-weight:600}
+
+    .filters{display:flex;gap:8px;align-items:center}
+    .filters button{padding:8px 10px;border-radius:8px;border:0;background:transparent;color:var(--muted);cursor:pointer}
+    .filters button.active{background:rgba(99,102,241,0.12);color:var(--accent);font-weight:700}
+
+    ul.items{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+    li.item{
+      background:var(--card);border-radius:10px;padding:10px;display:flex;gap:12px;align-items:center;border:1px solid rgba(15,23,42,0.04);box-shadow:0 2px 6px rgba(2,6,23,0.03);user-select:none
+    }
+    li.item.dragging{opacity:0.6}
+    .checkbox{width:20px;height:20px;border-radius:6px;border:2px solid rgba(15,23,42,0.08);display:grid;place-items:center;cursor:pointer}
+    .checkbox.checked{background:var(--accent);border-color:var(--accent);color:white}
+    .text{flex:1}
+    .text .label{font-size:15px}
+    .text .meta{font-size:12px;color:var(--muted)}
+
+    .actions{display:flex;gap:8px}
+    .icon-btn{background:transparent;border:0;padding:8px;border-radius:8px;cursor:pointer}
+
+    footer{grid-column:1/3;margin-top:6px;text-align:center;color:var(--muted);font-size:13px}
+
+    /* small screens */
+    @media (max-width:880px){
+      .app{grid-template-columns:1fr;}
+    }
+
+    /* Extra mobile tweaks */
+    @media (max-width: 600px) {
+      body {
+        padding: 8px;
+        font-size: 15px;
+      }
+      .app {
+        max-width:100%;
+        padding:8px;
+        border-radius:10px;
+        box-shadow:none;
+      }
+      .main {
+        padding: 10px;
+        border-radius: 8px;
+        min-height: 0;
+      }
+      header {
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 2px;
+      }
+      .title h1 {
+        font-size: 17px;
+      }
+      .logo {
+        width: 36px;
+        height: 36px;
+        font-size: 15px;
+      }
+      .controls {
+        flex-direction: column;
+        gap: 6px;
+      }
+      .input-wrap {
+        flex-direction: column;
+        gap: 6px;
+      }
+      .filters {
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      ul.items {
+        gap: 6px;
+      }
+      li.item {
+        padding: 7px;
+        gap: 8px;
+        font-size: 15px;
+      }
+      .actions {
+        gap: 4px;
+      }
+      .btn, .btn.ghost, .icon-btn {
+        min-width: 36px;
+        padding: 8px 10px;
+        font-size: 14px;
+      }
+      .edit-input, input[type="text"] {
+        padding: 8px 10px;
+        font-size: 14px;
+      }
+      footer {
+        font-size: 12px;
+        padding: 4px 0;
+      }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="app" role="application" aria-label="Checklist app">
+    <header>
+      <div class="title">
+        <div class="logo">CL</div>
+        <div>
+          <h1>Checklist POC</h1>
+          <p class="lead">Small, fast, and simple — your tasks, saved locally.</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div style="font-size:13px;color:var(--muted)">Theme</div>
+        <button id="themeToggle" class="btn ghost" aria-pressed="false">Toggle</button>
+      </div>
+    </header>
+
+    <section class="main" aria-labelledby="main-heading">
+      <h2 id="main-heading" style="margin:0 0 10px 0">Tasks</h2>
+
+      <div class="controls" aria-hidden="false">
+        <div class="input-wrap">
+          <input id="newTask" type="text" placeholder="Add a new task (press Enter to add)" aria-label="New task" />
+          <button id="addBtn" class="btn" title="Add task">Add</button>
+        </div>
+        <div class="filters" role="tablist" aria-label="Filter tasks">
+          <button data-filter="all" class="active" role="tab">All</button>
+          <button data-filter="active" role="tab">Active</button>
+          <button data-filter="completed" role="tab">Completed</button>
+        </div>
+      </div>
+
+      <ul id="items" class="items" aria-live="polite"></ul>
+
+      <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
+        <div id="counter" style="color:var(--muted)">0 items</div>
+        <div style="display:flex;gap:8px">
+          <button id="clearCompleted" class="btn ghost">Clear completed</button>
+          <button id="exportBtn" class="btn ghost">Export</button>
+        </div>
+      </div>
+    </section>
+
+    <footer>Made with ☕ — Local-only, privacy-friendly</footer>
+  </div>
+
+  <script>
+    // Simple Checklist SPA — plain JS (no frameworks)
+    (() => {
+      const KEY = 'checklist-v1';
+      let tasks = [];
+      let filter = 'all';
+
+      // DOM refs
+      const itemsEl = document.getElementById('items');
+      const newTaskInput = document.getElementById('newTask');
+      const addBtn = document.getElementById('addBtn');
+      const counter = document.getElementById('counter');
+      const clearCompletedBtn = document.getElementById('clearCompleted');
+      const exportBtn = document.getElementById('exportBtn');
+      const statTotal = document.getElementById('statTotal');
+      const statActive = document.getElementById('statActive');
+      const statCompleted = document.getElementById('statCompleted');
+      const themeToggle = document.getElementById('themeToggle');
+
+      // Load from localStorage
+      function load(){
+        try{
+          const raw = localStorage.getItem(KEY);
+          tasks = raw ? JSON.parse(raw) : [];
+        }catch(e){ tasks = []; }
+      }
+
+      function save(){
+        localStorage.setItem(KEY, JSON.stringify(tasks));
+      }
+
+      function uid(){ return Math.random().toString(36).slice(2,9); }
+
+      // Create task object
+      function createTask(text){
+        return { id: uid(), text: text.trim(), done: false, created: Date.now() };
+      }
+
+      // Render
+      function render(){
+        // filter
+        const visible = tasks.filter(t => {
+          if(filter === 'active') return !t.done;
+          if(filter === 'completed') return t.done;
+          return true;
+        });
+
+        itemsEl.innerHTML = '';
+        visible.forEach((t, i) => {
+          const li = document.createElement('li');
+          li.className = 'item';
+          li.draggable = true;
+          li.dataset.id = t.id;
+
+          li.innerHTML = `
+            <button class="checkbox" aria-label="Toggle task" title="Toggle">
+              ${t.done ? '✔' : ''}
+            </button>
+            <div class="text">
+              <div class="label">${escapeHtml(t.text)}</div>
+              <div class="meta">Added ${timeAgo(t.created)}</div>
+            </div>
+            <div class="actions">
+              <button class="icon-btn edit" title="Edit">✏️</button>
+              <button class="icon-btn del" title="Delete">🗑️</button>
+            </div>
+          `;
+
+          if(t.done) li.querySelector('.checkbox').classList.add('checked');
+
+          // events
+          li.querySelector('.checkbox').addEventListener('click', () => toggleDone(t.id));
+          li.querySelector('.del').addEventListener('click', () => removeTask(t.id));
+          li.querySelector('.edit').addEventListener('click', () => startEdit(li, t));
+
+          // keyboard delete on focused item
+          li.addEventListener('keydown', (e) => {
+            if(e.key === 'Delete') removeTask(t.id);
+            if(e.key === 'Enter') startEdit(li, t);
+          });
+
+          // drag and drop handlers
+          li.addEventListener('dragstart', (e) => {
+            li.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', t.id);
+            e.dataTransfer.effectAllowed = 'move';
+          });
+          li.addEventListener('dragend', () => li.classList.remove('dragging'));
+
+          li.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const dragging = itemsEl.querySelector('.dragging');
+            if(!dragging) return;
+            const nodes = [...itemsEl.children].filter(n => n !== dragging);
+            let replaced = false;
+            for(const node of nodes){
+              const rect = node.getBoundingClientRect();
+              const midpoint = rect.top + rect.height/2;
+              if(e.clientY < midpoint){ itemsEl.insertBefore(dragging, node); replaced = true; break; }
+            }
+            if(!replaced) itemsEl.appendChild(dragging);
+          });
+
+          li.addEventListener('drop', (e) => {
+            e.preventDefault();
+            // compute new order based on DOM
+            const order = [...itemsEl.children].map(n => n.dataset.id);
+            reorder(order);
+          });
+
+          itemsEl.appendChild(li);
+        });
+
+        // stats
+        const total = tasks.length;
+        const completed = tasks.filter(t => t.done).length;
+        const active = total - completed;
+        statTotal.textContent = total;
+        statActive.textContent = active;
+        statCompleted.textContent = completed;
+        counter.textContent = `${visible.length} ${visible.length === 1 ? 'item' : 'items'}`;
+
+        save();
+      }
+
+      function reorder(order){
+        const map = Object.fromEntries(tasks.map(t => [t.id, t]));
+        tasks = order.map(id => map[id]).filter(Boolean).concat(tasks.filter(t => !order.includes(t.id)));
+        render();
+      }
+
+      function toggleDone(id){
+        const t = tasks.find(x => x.id === id); if(!t) return;
+        t.done = !t.done; render();
+      }
+
+      function removeTask(id){
+        tasks = tasks.filter(t => t.id !== id); render();
+      }
+
+      function addTask(text){
+        const trimmed = text.trim(); if(!trimmed) return;
+        tasks.unshift(createTask(trimmed));
+        newTaskInput.value = '';
+        render();
+      }
+
+      function clearCompleted(){
+        tasks = tasks.filter(t => !t.done); render();
+      }
+
+      function exportTasks(){
+        const data = JSON.stringify(tasks, null, 2);
+        const blob = new Blob([data], {type:'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'checklist.json'; a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      // Edit in-place
+      function startEdit(li, task){
+        const textDiv = li.querySelector('.text');
+        const original = task.text;
+        textDiv.innerHTML = `<input class="edit-input" aria-label="Edit task" value="${escapeHtml(original)}" />`;
+        const input = textDiv.querySelector('.edit-input');
+        input.focus(); input.select();
+        input.addEventListener('blur', () => finishEdit(input.value.trim() || original, task));
+        input.addEventListener('keydown', (e) => { if(e.key === 'Enter') input.blur(); if(e.key === 'Escape'){ finishEdit(original, task); } });
+      }
+      function finishEdit(newText, task){ task.text = newText; render(); }
+
+      // helpers
+      function escapeHtml(s){ return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;'); }
+      function timeAgo(ts){
+        const s = Math.floor((Date.now()-ts)/1000);
+        if(s < 60) return s + 's ago';
+        const m = Math.floor(s/60); if(m<60) return m + 'm ago';
+        const h = Math.floor(m/60); if(h<24) return h + 'h ago';
+        const d = Math.floor(h/24); return d + 'd ago';
+      }
+
+      // events
+      addBtn.addEventListener('click', () => addTask(newTaskInput.value));
+      newTaskInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') addTask(newTaskInput.value); });
+
+      document.querySelectorAll('.filters button').forEach(b => b.addEventListener('click', (e) => {
+        document.querySelectorAll('.filters button').forEach(x => x.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        filter = e.currentTarget.dataset.filter; render();
+      }));
+
+      clearCompletedBtn.addEventListener('click', clearCompleted);
+      exportBtn.addEventListener('click', exportTasks);
+
+      // keyboard shortcut - focus input
+      document.addEventListener('keydown', (e) => {
+        if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k'){
+          e.preventDefault(); newTaskInput.focus(); newTaskInput.select();
+        }
+      });
+
+      // theme toggle (simple: invert background/foreground)
+      let dark = false;
+      themeToggle.addEventListener('click', () => {
+        dark = !dark; themeToggle.setAttribute('aria-pressed', dark);
+        if(dark){ document.documentElement.style.setProperty('--bg','#0b1220'); document.documentElement.style.setProperty('--card','#061127'); document.documentElement.style.setProperty('--muted','#93a5bf'); document.documentElement.style.setProperty('--accent','#7c3aed'); document.body.style.color='#e6eef8'; }
+        else { document.documentElement.style.removeProperty('--bg'); document.documentElement.style.removeProperty('--card'); document.documentElement.style.removeProperty('--muted'); document.documentElement.style.removeProperty('--accent'); document.body.style.color=''; }
+      });
+
+      // init
+      load(); render();
+
+    })();
+  </script>
+</body>
+</html>
